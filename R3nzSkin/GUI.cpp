@@ -182,43 +182,45 @@ void GUI::render() noexcept
 				}
 			}
 
-			if (ImGui::BeginTabItem("Other Champs")) {
-				ImGui::Text("Other Champs Skins Settings:");
-				std::int32_t last_team{ 0 };
-				for (auto i{ 0u }; i < heroes->length; ++i) {
-					const auto hero{ heroes->list[i] };
-
-					if (hero == player)
-						continue;
-
-					const auto champion_name_hash{ fnv::hash_runtime(hero->get_character_data_stack()->base_skin.model.str) };
-					if (champion_name_hash == FNV("PracticeTool_TargetDummy"))
-						continue;
-
-					const auto hero_team{ hero->get_team() };
-					const auto is_enemy{ hero_team != my_team };
-
-					if (last_team == 0 || hero_team != last_team) {
-						if (last_team != 0)
-							ImGui::Separator();
-						if (is_enemy)
-							ImGui::Text(" Enemy champions");
-						else
-							ImGui::Text(" Ally champions");
-						last_team = hero_team;
+			if (heroes->length > 1) {
+				if (ImGui::BeginTabItem("Other Champs")) {
+					ImGui::Text("Other Champs Skins Settings:");
+					std::int32_t last_team { 0 };
+					for (auto i { 0u }; i < heroes->length; ++i) {
+						const auto hero { heroes->list[i] };
+	
+						if (hero == player)
+							continue;
+	
+						const auto champion_name_hash { fnv::hash_runtime(hero->get_character_data_stack()->base_skin.model.str) };
+						if (champion_name_hash == FNV("PracticeTool_TargetDummy"))
+							continue;
+	
+						const auto hero_team { hero->get_team() };
+						const auto is_enemy { hero_team != my_team };
+	
+						if (last_team == 0 || hero_team != last_team) {
+							if (last_team != 0)
+								ImGui::Separator();
+							if (is_enemy)
+								ImGui::Text(" Enemy champions");
+							else
+								ImGui::Text(" Ally champions");
+							last_team = hero_team;
+						}
+	
+						auto& config_array { is_enemy ? cheatManager.config->current_combo_enemy_skin_index : cheatManager.config->current_combo_ally_skin_index };
+						const auto [fst, snd] { config_array.insert( { champion_name_hash, 0 }) };
+	
+						std::snprintf(this->str_buffer, sizeof(this->str_buffer), cheatManager.config->heroName ? "HeroName: [ %s ]##%X" : "PlayerName: [ %s ]##%X", cheatManager.config->heroName ? hero->get_character_data_stack()->base_skin.model.str : hero->get_name()->c_str(), reinterpret_cast<std::uintptr_t>(hero));
+	
+						auto& values { cheatManager.database->champions_skins[champion_name_hash] };
+						if (ImGui::Combo(str_buffer, &fst->second, vector_getter_skin, static_cast<void*>(&values), values.size() + 1))
+							if (fst->second > 0)
+								hero->change_skin(values[fst->second - 1].model_name, values[fst->second - 1].skin_id);
 					}
-
-					auto& config_array{ is_enemy ? cheatManager.config->current_combo_enemy_skin_index : cheatManager.config->current_combo_ally_skin_index };
-					const auto [fst, snd]{ config_array.insert({ champion_name_hash, 0 }) };
-
-					std::snprintf(this->str_buffer, sizeof(this->str_buffer), cheatManager.config->heroName ? "HeroName: [ %s ]##%X" : "PlayerName: [ %s ]##%X", cheatManager.config->heroName ? hero->get_character_data_stack()->base_skin.model.str : hero->get_name()->c_str(), reinterpret_cast<std::uintptr_t>(hero));
-
-					auto& values{ cheatManager.database->champions_skins[champion_name_hash] };
-					if (ImGui::Combo(str_buffer, &fst->second, vector_getter_skin, static_cast<void*>(&values), values.size() + 1))
-						if (fst->second > 0)
-							hero->change_skin(values[fst->second - 1].model_name, values[fst->second - 1].skin_id);
+					ImGui::EndTabItem();
 				}
-				ImGui::EndTabItem();
 			}
 
 			if (ImGui::BeginTabItem("Global Skins")) {
