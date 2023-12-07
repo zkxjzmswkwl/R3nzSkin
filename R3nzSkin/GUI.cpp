@@ -2,26 +2,14 @@
 #include <cstdio>
 #include <string>
 #include <vector>
-
-#include "CheatManager.hpp"
-#include "GUI.hpp"
-
 #include <ranges>
-
 #include "Memory.hpp"
 #include "SkinDatabase.hpp"
+#include "CheatManager.hpp"
+#include "GUI.hpp"
 #include "Utils.hpp"
 #include "fnv_hash.hpp"
 #include "imgui/imgui.h"
-
-inline static void footer() noexcept
-{
-	using namespace std::string_literals;
-	static const auto buildText{ "Last Build: "s + __DATE__ + " - " + __TIME__ };
-	ImGui::Separator();
-	ImGui::textUnformattedCentered(buildText.c_str());
-	ImGui::textUnformattedCentered("Copyright (C) 2021-2023 R3nzTheCodeGOD");
-}
 
 static void changeTurretSkin(const std::int32_t skinId, const std::int32_t team) noexcept
 {
@@ -46,6 +34,79 @@ static void changeTurretSkin(const std::int32_t skinId, const std::int32_t team)
 
 void GUI::render() noexcept
 {
+	static bool updatedStyle = false;
+	if (!updatedStyle) {
+		ImGuiIO &io = ImGui::GetIO();
+		// style.Alpha = 0.75f;
+		ImGuiStyle &style = ImGui::GetStyle();
+		// Set up fonts
+		ImFontConfig config;
+		config.OversampleH = 3;
+		config.OversampleV = 3;
+		config.PixelSnapH = true;
+		//io.Fonts->AddFontFromFileTTF("HelveticaNeue-Regular.otf", 15.f, &config);
+		style.WindowRounding = 2.0f;
+		style.FrameRounding = 2.0f;
+		style.ScrollbarRounding = 2.0f;
+		style.GrabRounding = 2.0f;
+		style.TabRounding = 2.0f;
+
+		// Colors
+		ImVec4 *colors = style.Colors;
+
+		// Window
+		colors[ImGuiCol_WindowBg] = ImVec4(0.11f, 0.11f, 0.15f, 1.00f);
+		colors[ImGuiCol_TitleBg] = ImVec4(0.11f, 0.11f, 0.18f, 1.00f);
+		colors[ImGuiCol_TitleBgActive] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+		colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.11f, 0.11f, 0.15f, 1.00f);
+		colors[ImGuiCol_Border] = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+		colors[ImGuiCol_FrameBg] = ImVec4(0.11f, 0.11f, 0.15f, 1.00f);
+		colors[ImGuiCol_FrameBgHovered] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+		colors[ImGuiCol_FrameBgActive] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+
+		// Text
+		colors[ImGuiCol_Text] = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
+		colors[ImGuiCol_TextDisabled] = ImVec4(0.40f, 0.40f, 0.40f, 1.00f);
+		colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+
+		// Buttons
+		colors[ImGuiCol_Button] = ImVec4(0.24f, 0.24f, 0.28f, 1.00f);
+		colors[ImGuiCol_ButtonHovered] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+		colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
+
+		// Header
+		colors[ImGuiCol_Header] = ImVec4(0.18f, 0.18f, 0.22f, 1.00f);
+		colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+		colors[ImGuiCol_HeaderActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+
+		// Tabs
+		colors[ImGuiCol_Tab] = ImVec4(0.18f, 0.18f, 0.22f, 1.00f);
+		colors[ImGuiCol_TabHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+		colors[ImGuiCol_TabActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+		colors[ImGuiCol_TabUnfocused] = ImVec4(0.18f, 0.18f, 0.22f, 1.00f);
+
+		// Input fields
+		colors[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+		colors[ImGuiCol_SliderGrab] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+		colors[ImGuiCol_SliderGrabActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
+		colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+		// Menus
+		colors[ImGuiCol_MenuBarBg] = ImVec4(0.11f, 0.11f, 0.15f, 1.00f);
+		colors[ImGuiCol_PopupBg] = ImVec4(0.11f, 0.11f, 0.15f, 0.98f);
+
+		// Separators
+		colors[ImGuiCol_Separator] = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+		colors[ImGuiCol_SeparatorHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.78f);
+		colors[ImGuiCol_SeparatorActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+
+		// Resize grip
+		colors[ImGuiCol_ResizeGrip] = ImVec4(0.26f, 0.59f, 0.98f, 0.25f);
+		colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
+		colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
+
+		// Drag and drop
+		colors[ImGuiCol_DragDropTarget] = ImVec4(0.26f, 0.59f, 0.98f, 0.90f);
+	}
 	std::call_once(set_font_scale, [&]
 	{
 		ImGui::GetIO().FontGlobalScale = cheatManager.config->fontScale;
@@ -84,7 +145,7 @@ void GUI::render() noexcept
 		return true;
 	};
 
-	ImGui::Begin("R3nzSkin", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("2PACALYPSE 2.3 - MONEYMACK", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_AlwaysAutoResize);
 	{
 		ImGui::rainbowText();
 		if (ImGui::BeginTabBar("TabBar", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_FittingPolicyScroll | ImGuiTabBarFlags_NoTooltip)) {
@@ -117,7 +178,6 @@ void GUI::render() noexcept
 
 					if (ImGui::Combo("Current Ward Skin", &cheatManager.config->current_combo_ward_index, vector_getter_ward_skin, static_cast<void*>(&cheatManager.database->wards_skins), cheatManager.database->wards_skins.size() + 1))
 						cheatManager.config->current_ward_skin_index = cheatManager.config->current_combo_ward_index == 0 ? -1 : cheatManager.database->wards_skins.at(cheatManager.config->current_combo_ward_index - 1).first;
-					footer();
 					ImGui::EndTabItem();
 				}
 			}
@@ -158,7 +218,6 @@ void GUI::render() noexcept
 						if (fst->second > 0)
 							hero->change_skin(values[fst->second - 1].model_name, values[fst->second - 1].skin_id);
 				}
-				footer();
 				ImGui::EndTabItem();
 			}
 
@@ -180,7 +239,6 @@ void GUI::render() noexcept
 						for (const auto& hash : it.name_hashes)
 							cheatManager.config->current_combo_jungle_mob_skin_index[hash] = fst->second;
 				}
-				footer();
 				ImGui::EndTabItem();
 			}
 
@@ -251,7 +309,6 @@ void GUI::render() noexcept
 					cheatManager.hooks->uninstall();
 				ImGui::hoverInfo("You will be returned to the reconnect screen.");
 				ImGui::Text("FPS: %.0f FPS", ImGui::GetIO().Framerate);
-				footer();
 				ImGui::EndTabItem();
 			}
 		}
